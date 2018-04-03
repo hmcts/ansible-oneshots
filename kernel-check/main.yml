@@ -1,0 +1,9 @@
+---
+- name: Check Kernel Versions
+  hosts: "{{ host_to_apply_to }}"
+  serial: 1
+  become: yes
+
+  tasks:
+    - name: Include kernel-check.yml
+      include_tasks: includes/kernel-check.yml

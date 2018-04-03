@@ -1,0 +1,66 @@
+---
+
+- name: Elasticsearch rolling restart
+  hosts: "{{ host_to_apply_to }}"
+  serial: 1
+  become: yes
+
+  vars:
+    elk_es_host: "{{ lookup('hashi_vault', 'secret=secret/devops/elk/elk_elastic_hostname:value')|replace('\\n', '\n') }}"
+    elk_es_user: "{{ lookup('hashi_vault', 'secret=secret/devops/elk/elk_elastic_username:value')|replace('\\n', '\n') }}"
+    elk_es_pass: "{{ lookup('hashi_vault', 'secret=secret/devops/elk/elk_elastic_password:value')|replace('\\n', '\n') }}"
+
+  tasks:
+    - name: Ensure current cluster state is green
+      uri:
+        url: https://{{ elk_es_host }}:9200/_cluster/health?wait_for_status=green&timeout=60s
+        method: GET
+        user:  "{{ elk_es_user }}"
+        password: "{{ elk_es_pass }}"
+        headers:
+          Content-Type: "application/json"
+      register: uri_output
+      retries: 120
+      until: uri_output.status == 200
+      environment:
+        no_proxy: "{{ elk_es_host }}"
+
+
+    - name: Disable shard allocations
+      uri:
+        url: https://{{ elk_es_host }}:9200/_cluster/settings
+        method: PUT
+        body: '{"transient":{"cluster.routing.allocation.enable":"none"}}'
+        user:  "{{ elk_es_user }}"
+        password: "{{ elk_es_pass }}"
+        headers:
+          Content-Type: "application/json"
+      environment:
+        no_proxy: "{{ elk_es_host }}"
+
+    - name: Restart Elasticsearch
+      service:
+        name: elasticsearch
+        state: restarted
+
+    - name: Wait for port 9200 to respond
+      wait_for:
+        host: "{{ ansible_fqdn }}"
+        port: 9200
+        delay: 10
+
+    - name: Wait for local shards to initialise
+      wait_for:
+        timeout: 240
+
+    - name: Enable shard allocations
+      uri:
+        url: https://{{ elk_es_host }}:9200/_cluster/settings
+        method: PUT
+        body: '{"transient":{"cluster.routing.allocation.enable":"all"}}'
+        user:  "{{ elk_es_user }}"
+        password: "{{ elk_es_pass }}"
+        headers:
+          Content-Type: "application/json"
+      environment:
+        no_proxy: "{{ elk_es_host }}"

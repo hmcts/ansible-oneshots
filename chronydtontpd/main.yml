@@ -1,0 +1,9 @@
+---
+
+- name: Chronyd to Ntpd
+  hosts: "{{ host_to_apply_to }}"
+  become: yes
+
+  tasks:
+    - name: Include chronytontpd.yml
+      include_tasks: includes/chronytontpd.yml

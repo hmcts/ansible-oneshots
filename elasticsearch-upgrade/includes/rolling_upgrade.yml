@@ -1,0 +1,107 @@
+---
+# fetch plugins so we can fail early if they haven't been uploaded to artifactory
+- name: Fetch plugins from artifactory
+  get_url:
+    url: "{{ elk_plugin_base_url }}/{{ item }}-{{ elk_dst_version }}.zip"
+    dest: "/tmp/{{ item }}-{{ elk_dst_version }}.zip"
+  with_items: "{{ elk_es_plugins }}"
+
+- name: check cluster state is green
+  uri:
+    url: https://{{ elk_es_host }}:9200/_cluster/health?wait_for_status=green&timeout=30s
+    method: GET
+    user: "{{ elk_es_user }}"
+    password: "{{ elk_es_pass }}"
+    validate_certs: no
+  retries: 4
+  delay: 30
+
+- name: disable shard allocation
+  uri:
+    url: https://{{ elk_es_host }}:9200/_cluster/settings
+    method: PUT
+    body: '{"transient":{"cluster.routing.allocation.enable":"none"}}'
+    user: "{{ elk_es_user }}"
+    password: "{{ elk_es_pass }}"
+    validate_certs: no
+    headers:
+      Content-Type: "application/json"
+
+- name: stop elasticsearch
+  systemd:
+    name: elasticsearch
+    state: stopped
+
+- name: remove plugins
+  command: /usr/share/elasticsearch/bin/elasticsearch-plugin remove {{ item }}
+  with_items: "{{ elk_es_plugins }}"
+
+- name: upgrade ES
+  yum:
+    name: elasticsearch-{{ elk_dst_version }}
+
+- name: re-install plugins
+  command: /usr/share/elasticsearch/bin/elasticsearch-plugin install --batch file:///tmp/{{ item }}-{{ elk_dst_version }}.zip
+  with_items: "{{ elk_es_plugins }}"
+
+- name: remove plugin temp file
+  file:
+    name: "/tmp/{{ item }}-{{ elk_dst_version }}.zip"
+    state: absent
+  with_items: "{{ elk_es_plugins }}"
+
+# The two lines were found to be needed on CentOS 7 when upgrading from 5.x to 6.x
+- name: Make sure log directory is set
+  lineinfile:
+    path: /etc/elasticsearch/elasticsearch.yml
+    line: "path.logs: /var/log/elasticsearch"
+
+- name: Make sure data directory is set
+  lineinfile:
+    path: /etc/elasticsearch/elasticsearch.yml
+    line: "path.data: /var/lib/elasticsearch"
+
+# Daemon reload is needed during the ugprade otherwise ES won't start
+- name: start ES service
+  systemd:
+    name: elasticsearch
+    state: started
+    enabled: yes
+    daemon_reload: yes
+
+- name: Waiting for port 9200
+  wait_for:
+    host: "{{ ansible_fqdn }}"
+    port: 9200
+    delay: 10
+
+# Give the local node time to initialise the local shards
+# NOTE: it's not reliable to wait for cluster state to turn yellow here.  Testing has shown that during a rolling upgrade
+#       the cluster state can remain red at this point until shard allocation is enabled so best to re-enable it after
+#       a short wait and then wait for it to turn green.
+- name: wait for local shards to initialise
+  wait_for:
+    timeout: 120
+
+- name: re-enable cluster shared allocation
+  uri:
+    url: https://{{ elk_es_host }}:9200/_cluster/settings
+    method: PUT
+    body: '{"transient":{"cluster.routing.allocation.enable":"all"}}'
+    user: "{{ elk_es_user }}"
+    password: "{{ elk_es_pass }}"
+    validate_certs: no
+    headers:
+      Content-Type: "application/json"
+
+- name: wait for cluster state to return to green
+  uri:
+    url: https://{{ elk_es_host }}:9200/_cluster/health
+    method: GET
+    user: "{{ elk_es_user }}"
+    password: "{{ elk_es_pass }}"
+    validate_certs: no
+  register: response
+  until: response.json.status == "green"
+  retries: 20
+  delay: 30

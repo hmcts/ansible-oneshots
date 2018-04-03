@@ -1,0 +1,12 @@
+---
+- name: Stop Chronyd
+  service:
+    name: chronyd
+    state: stopped
+    enabled: no
+
+- name: Start Ntpd
+  service:
+    name: ntpd
+    state: started
+    enabled: yes

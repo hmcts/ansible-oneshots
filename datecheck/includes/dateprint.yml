@@ -1,0 +1,8 @@
+---
+- name: Print date
+  debug:
+    msg: "Ansible thinks the date is: {{ ansible_date_time.date }}"
+
+- name: Print inherited date var
+  debug:
+    msg: "Star Wars was release on: {{ date_of_starwars_release }}"

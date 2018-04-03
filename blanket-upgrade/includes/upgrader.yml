@@ -1,0 +1,10 @@
+---
+- name: Install screen for next section
+  yum:
+    name: screen
+    state: latest
+
+- name: Upgrade
+  yum:
+    name: '*'
+    state: latest

@@ -1,0 +1,10 @@
+---
+
+- name: Blanket Upgrader
+  hosts: "{{ host_to_apply_to }}"
+  serial: 1
+  become: yes
+
+  tasks:
+    - name: Include upgrader.yml
+      include_tasks: includes/upgrader.yml

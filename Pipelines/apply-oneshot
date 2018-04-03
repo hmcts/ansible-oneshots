@@ -1,0 +1,125 @@
+#!groovy
+
+def channel = '#devops-builds'
+def specificrole = "${env.specificrole}"
+def enableAnsibleDebug = "${env.enableAnsibleDebug}"
+def extraVars = "${env.extraVars}"
+def remoteUser = "${env.remoteUser}"
+extraVars = extraVars?.trim()
+
+properties(
+  [[$class: 'GithubProjectProperty', projectUrlStr: 'https://github.com/hmcts/ansible-oneshots/']]
+)
+
+@Library('Reform') _
+
+
+def ansibleDebug = ''
+if (enableAnsibleDebug == 'true'){
+  ansibleDebug = '-vvvv'
+}
+
+def extraVarsString = "--extra-vars='host_to_apply_to=${env.host_to_apply_to}'"
+
+def extraVarsArray = []
+extraVarsArray = extraVars?.split()
+
+for(varPair in extraVarsArray) {
+  extraVarsString += " --extra-vars=${varPair}"
+}
+
+
+node {
+  ws('ansible-oneshots') {
+    try {
+      wrap([$class: 'AnsiColorBuildWrapper', colorMapName: 'xterm']) {
+
+        deleteDir()
+
+        stage('Checkout') {
+          checkout scm
+          dir('ansible-oneshots') {
+            git url: "git@github.com:hmcts/ansible-oneshots.git", branch: "${env.branch}"
+          }
+        }
+
+        if (specificrole != '') {
+
+          stage('Role Checkout') {
+            checkout scm
+            dir("${env.specificrole}") {
+            git url: "git@github:hmcts/${env.specificrole}.git", branch: "${branch}"
+            }
+          }
+
+        }
+
+        if (specificrole == '') {
+
+        stage('Ensure correct branch') {
+          sh """
+            git checkout ${env.branch}
+          """
+        }
+
+        stage('Ansible Lint') {
+          sh """
+            ansible-lint ${env.oneshot}/main.yml
+          """
+        }
+
+        }
+
+        stage('Ansible Syntax') {
+          sh """
+
+          if [ '${env.specificrole}' != '' ]; then
+
+            echo 'Checking specific role syntax.'
+
+            ansible-galaxy install -r ${env.specificrole}/requirements.yml -f  --roles-path=${env.specificrole}/roles/
+
+            ansible-playbook ${extraVarsString} --syntax-check ${env.specificrole}/${env.playbookfile} -i ${env.host_to_apply_to},
+
+          else
+
+            ansible-playbook ${extraVarsString} --syntax-check ${env.oneshot}/main.yml -i ${env.host_to_apply_to},
+
+          fi
+          """
+        }
+
+        stage('Apply oneshot to host.') {
+          sh """
+
+          if [ '${env.specificrole}' != '' ]; then
+
+            echo 'Applying specific role to host specified.'
+
+            ansible-galaxy install -r ${env.specificrole}/requirements.yml -f  --roles-path=${env.specificrole}/roles/
+
+            ansible-playbook ${ansibleDebug} -i '${env.host_to_apply_to},' -u ${env.remoteUser} -b ${extraVarsString} ${env.specificrole}/${env.playbookfile}
+
+          else
+
+            ansible-playbook ${ansibleDebug} -i '${env.host_to_apply_to},' -u ${env.remoteUser} -b ${extraVarsString} ${env.oneshot}/main.yml
+
+          fi
+          """
+        }
+
+    }
+
+    } catch (err) {
+      notifyBuildFailure channel: "${channel}"
+      throw err
+    } finally {
+      stage('Cleanup') {
+          sh '''
+            echo "Handled by deleteDir()"
+            '''
+        }
+      deleteDir()
+      }
+  }
+}

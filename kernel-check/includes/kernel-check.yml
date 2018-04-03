@@ -1,0 +1,6 @@
+---
+- name: Get Kernel Version
+  shell: uname -r
+  register: shell_output
+
+- debug: msg="{{ shell_output.stdout}}"

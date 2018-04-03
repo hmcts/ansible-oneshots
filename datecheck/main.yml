@@ -1,0 +1,13 @@
+---
+
+- name: Date Checker
+  hosts: "{{ host_to_apply_to }}"
+  serial: 1
+  become: yes
+
+  vars:
+    date_of_starwars_release: "1977-05-25"
+
+  tasks:
+    - name: Include dateprint.yml
+      include_tasks: includes/dateprint.yml
