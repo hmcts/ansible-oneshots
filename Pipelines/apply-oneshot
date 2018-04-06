@@ -5,6 +5,7 @@ def specificrole = "${env.specificrole}"
 def enableAnsibleDebug = "${env.enableAnsibleDebug}"
 def extraVars = "${env.extraVars}"
 def remoteUser = "${env.remoteUser}"
+def credentials = "${env.credentials}"
 extraVars = extraVars?.trim()
 
 properties(
@@ -39,7 +40,7 @@ node {
         stage('Checkout') {
           checkout scm
           dir('ansible-oneshots') {
-            git url: "https://github.com/hmcts/ansible-oneshots", branch: "${env.branch}"
+            git url: "https://github.com/hmcts/ansible-oneshots", branch: "${env.branch}", credentialsId: "${env.credentials}"
           }
         }
 
@@ -48,7 +49,7 @@ node {
           stage('Role Checkout') {
             checkout scm
             dir("${env.specificrole}") {
-            git url: "https://github.com/hmcts/${env.specificrole}", branch: "${branch}"
+            git url: "https://github.com/hmcts/${env.specificrole}", branch: "${branch}", credentialsId: "${env.credentials}"
             }
           }
 
