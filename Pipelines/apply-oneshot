@@ -39,7 +39,7 @@ node {
         stage('Checkout') {
           checkout scm
           dir('ansible-oneshots') {
-            git url: "git@github.com:hmcts/ansible-oneshots.git", branch: "${env.branch}"
+            git url: "https://github.com/hmcts/ansible-oneshots", branch: "${env.branch}"
           }
         }
 
@@ -48,7 +48,7 @@ node {
           stage('Role Checkout') {
             checkout scm
             dir("${env.specificrole}") {
-            git url: "git@github:hmcts/${env.specificrole}.git", branch: "${branch}"
+            git url: "https://github.com/hmcts/${env.specificrole}", branch: "${branch}"
             }
           }
 
