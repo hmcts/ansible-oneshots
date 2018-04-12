@@ -1,0 +1,14 @@
+---
+- name: Check and update PostgreSQL SSL certificate
+  hosts: "{{ host_to_apply_to }}"
+  serial: 1
+  become: yes
+
+  vars:
+    postgresql_version: "9.6"
+    postgresql_ssl_key: "{{ lookup('hashi_vault', 'secret=secret/devops/dev/ssl/ssl_key_STAR_reform_hmcts_net:value') | replace('\\n', '\n') }}"
+    postgresql_ssl_crt: "{{ lookup('hashi_vault', 'secret=secret/devops/dev/ssl/ssl_crt_STAR_reform_hmcts_net:value') | replace('\\n', '\n') }}"
+
+  tasks:
+    - name: Check and update PostgreSQL SSL certificate
+      include_tasks: includes/postgresql-ssl.yml

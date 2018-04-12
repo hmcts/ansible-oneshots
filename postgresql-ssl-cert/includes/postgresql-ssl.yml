@@ -1,0 +1,55 @@
+---
+- name: Get information about current SSL certificate
+  command: /bin/openssl x509 -enddate -noout -in /var/lib/pgsql/{{ postgresql_version }}/data/server.crt
+  register: ssl_check_result
+  changed_when: false
+
+- name: Show information about current SSL certificate expiration
+  debug: msg="{{ ssl_check_result.stdout }}"
+
+- name: "Write latest SSL cert to temp file"
+  copy:
+    dest: "/var/lib/pgsql/{{ postgresql_version }}/data/server.tmp"
+    content: "{{ postgresql_ssl_crt }}"
+    mode: 0400
+    owner: postgres
+    group: postgres
+
+- name: Get information about latest SSL certificate
+  command: /bin/openssl x509 -enddate -noout -in /var/lib/pgsql/{{ postgresql_version }}/data/server.crt
+  register: ssl_check_result
+  changed_when: false
+
+- name: Show information about latest SSL certificate expiration
+  debug: msg="{{ ssl_check_result.stdout }}"
+
+- name: "Make sure the latest SSL certificate is not about to expire"
+  command: /bin/openssl x509 -checkend 2592000 -noout -in /var/lib/pgsql/{{ postgresql_version }}/data/server.tmp
+  register: ssl_check_result
+  failed_when: "ssl_check_result.rc != 0"
+  changed_when: false
+
+- name: "Write latest SSL cert to file"
+  copy:
+    dest: "/var/lib/pgsql/{{ postgresql_version }}/data/server.crt"
+    content: "{{ postgresql_ssl_crt }}"
+    mode: 0400
+    owner: postgres
+    group: postgres
+  register: ssl_update_crt
+
+- name: "Write latest SSL key to file"
+  copy:
+    dest: "/var/lib/pgsql/{{ postgresql_version }}/data/server.key"
+    content: "{{ postgresql_ssl_key }}"
+    mode: 0400
+    owner: postgres
+    group: postgres
+  register: ssl_update_key
+
+- name: "Restart PostgreSQL service if required"
+  systemd:
+    name: postgresql-{{ postgresql_version }}
+    state: restarted
+    daemon-reload: yes
+  when: ssl_update_crt.changed or ssl_update_key.changed
