@@ -1,4 +1,9 @@
 ---
+- name: Make sure the PostgreSQL service is active
+  command: /bin/systemctl is-active postgresql-{{ postgresql_version }}
+  register: service_status
+  failed_when: "service_status.rc != 0"
+
 - name: Get information about current SSL certificate
   command: /bin/openssl x509 -enddate -noout -in /var/lib/pgsql/{{ postgresql_version }}/data/server.crt
   register: ssl_check_result
