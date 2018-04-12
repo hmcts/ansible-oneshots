@@ -6,11 +6,11 @@
 
 - name: Get information about current SSL certificate
   command: /bin/openssl x509 -enddate -noout -in /var/lib/pgsql/{{ postgresql_version }}/data/server.crt
-  register: ssl_check_result
+  register: ssl_current_cert_info
   changed_when: false
 
 - name: Show information about current SSL certificate expiration
-  debug: msg="{{ ssl_check_result.stdout }}"
+  debug: msg="{{ ssl_current_cert_info.stdout }}"
 
 - name: "Write latest SSL cert to temp file"
   copy:
@@ -22,16 +22,16 @@
 
 - name: Get information about latest SSL certificate
   command: /bin/openssl x509 -enddate -noout -in /var/lib/pgsql/{{ postgresql_version }}/data/server.crt
-  register: ssl_check_result
+  register: ssl_latest_cert_info
   changed_when: false
 
 - name: Show information about latest SSL certificate expiration
-  debug: msg="{{ ssl_check_result.stdout }}"
+  debug: msg="{{ ssl_latest_cert_info.stdout }}"
 
 - name: "Make sure the latest SSL certificate is not about to expire"
   command: /bin/openssl x509 -checkend 2592000 -noout -in /var/lib/pgsql/{{ postgresql_version }}/data/server.tmp
-  register: ssl_check_result
-  failed_when: "ssl_check_result.rc != 0"
+  register: ssl_latest_cert_check
+  failed_when: "ssl_latest_cert_check.rc != 0"
   changed_when: false
 
 - name: "Write latest SSL cert to file"
