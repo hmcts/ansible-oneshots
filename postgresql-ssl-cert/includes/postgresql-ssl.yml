@@ -20,14 +20,6 @@
     owner: postgres
     group: postgres
 
-- name: Get information about latest SSL certificate
-  command: /bin/openssl x509 -enddate -noout -in /var/lib/pgsql/{{ postgresql_version }}/data/server.crt
-  register: ssl_latest_cert_info
-  changed_when: false
-
-- name: Show information about latest SSL certificate expiration
-  debug: msg="{{ ssl_latest_cert_info.stdout }}"
-
 - name: "Make sure the latest SSL certificate is not about to expire"
   command: /bin/openssl x509 -checkend 2592000 -noout -in /var/lib/pgsql/{{ postgresql_version }}/data/server.tmp
   register: ssl_latest_cert_check
@@ -51,6 +43,14 @@
     owner: postgres
     group: postgres
   register: ssl_update_key
+
+- name: Get information about latest SSL certificate
+  command: /bin/openssl x509 -enddate -noout -in /var/lib/pgsql/{{ postgresql_version }}/data/server.crt
+  register: ssl_latest_cert_info
+  changed_when: false
+
+- name: Show information about latest SSL certificate expiration
+  debug: msg="{{ ssl_latest_cert_info.stdout }}"
 
 - name: "Restart PostgreSQL service if required"
   systemd:
