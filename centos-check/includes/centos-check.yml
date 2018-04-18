@@ -1,0 +1,16 @@
+---
+- name: Get CentOS version
+  command: cat /etc/centos-release
+  failed_when: false
+  register: centos_version
+
+- debug: msg="{{ centos_version.stdout}}"
+  when: centos_version.rc == 0
+
+- name: Get SSSD version
+  shell: rpm -qa sssd
+  failed_when: false
+  register: sssd_version
+
+- debug: msg="{{ sssd_version.stdout}}"
+  when: sssd_version.rc == 0
