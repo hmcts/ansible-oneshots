@@ -1,0 +1,19 @@
+---
+- name: Get SSSD version
+  shell: rpm -qa sssd
+  failed_when: false
+  register: sssd_version
+
+- debug: msg="{{ sssd_version.stdout}}"
+  when: sssd_version.rc == 0
+
+- name: Make sure SSSD is up to date
+  yum:
+    name: sssd
+    state: latest
+
+- name: Make sure SSSD service is running
+  service:
+    name: sssd
+    state: started
+    enabled: true
