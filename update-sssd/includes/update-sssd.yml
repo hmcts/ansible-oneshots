@@ -1,6 +1,7 @@
 ---
 - name: Get SSSD version
   shell: rpm -qa sssd
+  changed_when: false
   failed_when: false
   register: sssd_version
 
