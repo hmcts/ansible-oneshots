@@ -1,6 +1,7 @@
 ---
 - name: Get CentOS version
   command: cat /etc/centos-release
+  changed_when: false
   failed_when: false
   register: centos_version
 
@@ -9,6 +10,7 @@
 
 - name: Get SSSD version
   shell: rpm -qa sssd
+  changed_when: false
   failed_when: false
   register: sssd_version
 
