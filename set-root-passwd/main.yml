@@ -1,0 +1,12 @@
+---
+- name: Set root password
+  hosts: "{{ host_to_apply_to }}"
+  serial: 1
+  become: yes
+
+  vars:
+    root_passwd_hash: "{{ lookup('hashi_vault', 'secret=secret/devops/vms_linux_root_passwd_sha512:key') | replace('\n', '') }}"
+
+  tasks:
+    - name: Set root password
+      include_tasks: includes/root-password.yml
