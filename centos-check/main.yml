@@ -1,7 +1,7 @@
 ---
 - name: Check CentOS version
   hosts: "{{ host_to_apply_to }}"
-  serial: 1
+  serial: 5
   become: yes
 
   tasks:

@@ -1,0 +1,9 @@
+---
+- name: Update SSSD if required
+  hosts: "{{ host_to_apply_to }}"
+  serial: 1
+  become: yes
+
+  tasks:
+    - name: Include update-sssd.yml
+      include_tasks: includes/update-sssd.yml
