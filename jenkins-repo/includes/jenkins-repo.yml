@@ -1,0 +1,10 @@
+---
+- name: "Add Jenkins External Repo"
+  yum_repository:
+    file: "jenkins"
+    name: "jenkins"
+    description: "Jenkins"
+    baseurl: "http://pkg.jenkins.io/redhat"
+    enabled: "1"
+    gpgkey: "https://pkg.jenkins.io/redhat/jenkins.io.key"
+    gpgcheck: "true"

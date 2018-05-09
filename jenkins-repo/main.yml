@@ -1,0 +1,9 @@
+---
+- name: Add Jenkins External Repo
+  hosts: "{{ host_to_apply_to }}"
+  serial: 1
+  become: yes
+
+  tasks:
+    - name: Include jenkins-repo.yml
+      include_tasks: includes/jenkins-repo.yml
