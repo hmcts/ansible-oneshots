@@ -37,82 +37,110 @@ node {
 
         deleteDir()
 
-        stage('Checkout') {
+        /*stage('Checkout') {
           checkout scm
+
+          echo("After initial checkout scm")
+          echo("=================================================")
+          echo("=================================================")
+          sh("find .")
+          echo("=================================================")
+          echo("=================================================")
+
           dir('ansible-oneshots') {
             git url: "https://github.com/hmcts/ansible-oneshots", branch: "${env.branch}", credentialsId: "${env.credentials}"
           }
-        }
+        }*/
 
         if (specificrole != '') {
+          dir("ansible-management") {
 
-          stage('Role Checkout') {
-            checkout scm
-            dir("${env.specificrole}") {
-            git url: "https://github.com/hmcts/${env.specificrole}", branch: "${branch}", credentialsId: "${env.credentials}"
+            stage('Role Checkout') {
+              git url: "https://github.com/hmcts/ansible-management.git", branch: "master", credentialsId: "jenkins-public-github-api-token"
+              //checkout scm
+              dir("roles/${env.specificrole}") {
+                git url: "https://github.com/hmcts/${env.specificrole}", branch: "${branch}", credentialsId: "${env.credentials}"
+              }
+              echo("After role checkout")
+              echo("=================================================")
+              echo("=================================================")
+              sh("find . -type f")
+              echo("=================================================")
+              echo("=================================================")
+            }
+
+            stage('Ansible Galaxy') {
+              sh """
+                echo 'Getting dependencies using ansible-galaxy'
+                ansible-galaxy install -r roles/${env.specificrole}/requirements.yml -f --roles-path=roles/
+                echo "================================================="
+                echo "================================================="
+                find . -type f
+                echo "================================================="
+                echo "================================================="
+                echo ""
+          cat << EOF > ansible.cfg
+[defaults]
+roles_path = roles
+EOF
+                cat ansible.cfg
+              """
+            }
+
+            stage('Ansible Syntax') {
+              sh """
+                echo 'Checking role syntax'
+                ansible-playbook ${extraVarsString} --syntax-check roles/${env.specificrole}/${env.playbookfile} -i ${env.host_to_apply_to}
+              """
+            }
+
+            stage('Apply oneshot role to host') {
+              sh """
+                echo 'Applying specific role to host specified'
+                ls -lh group_vars
+                ansible-playbook ${ansibleDebug} -i '${env.host_to_apply_to},' -u ${env.remoteUser} -b ${extraVarsString} roles/${env.specificrole}/${env.playbookfile}
+              """
             }
           }
+        } else /* specificrole == '' */ {
 
-        }
+            stage('Role Checkout') {
+              stage('Ensure correct branch') {
+                checkout scm
+                echo("After oneshot checkout")
+                echo("=================================================")
+                echo("=================================================")
+                sh("find . -type f")
+                echo("=================================================")
+                echo("=================================================")
+                sh """
+                  git checkout ${env.branch}
+                """
+              }
+            }
 
-        if (specificrole == '') {
+            stage('Ansible Lint') {
+              sh """
+                ansible-lint ${env.oneshot}/main.yml
+              """
+            }
 
-        stage('Ensure correct branch') {
-          sh """
-            git checkout ${env.branch}
-          """
-        }
+            stage('Ansible Syntax') {
+              sh """
+                ansible-playbook ${extraVarsString} --syntax-check ${env.oneshot}/main.yml -i ${env.host_to_apply_to},
+              """
+            }
 
-        stage('Ansible Lint') {
-          sh """
-            ansible-lint ${env.oneshot}/main.yml
-          """
-        }
-
-        }
-
-        stage('Ansible Syntax') {
-          sh """
-
-          if [ '${env.specificrole}' != '' ]; then
-
-            echo 'Checking specific role syntax.'
-
-            ansible-galaxy install -r ${env.specificrole}/requirements.yml -f  --roles-path=${env.specificrole}/roles/
-
-            ansible-playbook ${extraVarsString} --syntax-check ${env.specificrole}/${env.playbookfile} -i ${env.host_to_apply_to},
-
-          else
-
-            ansible-playbook ${extraVarsString} --syntax-check ${env.oneshot}/main.yml -i ${env.host_to_apply_to},
-
-          fi
-          """
-        }
-
-        stage('Apply oneshot to host.') {
-          sh """
-
-          if [ '${env.specificrole}' != '' ]; then
-
-            echo 'Applying specific role to host specified.'
-
-            ansible-galaxy install -r ${env.specificrole}/requirements.yml -f  --roles-path=${env.specificrole}/roles/
-
-            ansible-playbook ${ansibleDebug} -i '${env.host_to_apply_to},' -u ${env.remoteUser} -b ${extraVarsString} ${env.specificrole}/${env.playbookfile}
-
-          else
-
-            ansible-playbook ${ansibleDebug} -i '${env.host_to_apply_to},' -u ${env.remoteUser} -b ${extraVarsString} ${env.oneshot}/main.yml
-
-          fi
-          """
-        }
-
-    }
+            stage('Apply oneshot to host') {
+              sh """
+                ansible-playbook ${ansibleDebug} -i '${env.host_to_apply_to},' -u ${env.remoteUser} -b ${extraVarsString} ${env.oneshot}/main.yml
+              """
+            }
+         }
+      }
 
     } catch (err) {
-      notifyBuildFailure channel: "${channel}"
+      /*notifyBuildFailure channel: "${channel}"*/
       throw err
     } finally {
       stage('Cleanup') {
