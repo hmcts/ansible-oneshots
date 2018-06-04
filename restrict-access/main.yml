@@ -1,0 +1,8 @@
+---
+- name: Restrict Access
+  hosts: "{{ host_to_apply_to }}"
+  serial: 1
+
+  tasks:
+    - name: Include restrictaccess.yml
+      include_tasks: tasks/main.yml
