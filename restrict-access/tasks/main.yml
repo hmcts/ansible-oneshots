@@ -1,0 +1,21 @@
+---
+- name: Print IP we're locking down to
+  debug:
+    msg: "{{ only_source_address }}"
+
+- name: Allow me
+  iptables:
+    chain: INPUT
+    source: "{{ only_source_address }}"
+    protocol: tcp
+    match: tcp
+    jump: ACCEPT
+    rule_num: 1
+  become: true
+
+- name: Block everything else
+  iptables:
+    chain: INPUT
+    jump: DROP
+    rule_num: 2
+  become: true
