@@ -5,6 +5,7 @@
 
 - name: Allow me
   iptables:
+    action: insert
     chain: INPUT
     source: "{{ only_source_address }}"
     protocol: tcp
@@ -15,6 +16,7 @@
 
 - name: Block everything else
   iptables:
+    action: insert
     chain: INPUT
     jump: DROP
     rule_num: 2
