@@ -3,6 +3,10 @@
   debug:
     msg: "{{ only_source_address }}"
 
+- name: Value of revert_access
+  debug:
+    msg: '{{ revert_block }}'
+
 - name: Allow me
   iptables:
     action: insert
@@ -13,6 +17,7 @@
     jump: ACCEPT
     rule_num: 1
   become: true
+  when: not revert_block
 
 - name: Block everything else
   iptables:
@@ -21,3 +26,11 @@
     jump: DROP
     rule_num: 2
   become: true
+  when: not revert_block
+
+- name: Revert block
+  iptables:
+    flush: true
+    chain: INPUT
+  become: true
+  when: revert_block
