@@ -13,13 +13,14 @@ platforms:
 provisioner:
   name: ansible
   options:
-    extra-vars: "host_to_apply_to=localhost, only_source_address=10.0.2.0/12"
+    extra-vars: '{"host_to_apply_to":"localhost","only_source_address":"10.0.2.0/12"}'
   lint:
     name: ansible-lint
 scenario:
-  name: vagrant
+  name: default
 verifier:
   name: testinfra
+  enabled: true
   lint:
     name: flake8
     enabled: true
