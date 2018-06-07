@@ -19,7 +19,7 @@ Testing
 In order to test locally, please ensure you have Vagrant, VirtualBox, and 
 Molecule installed, along with the dependencies required.
 ```
-$ molecule test -s vagrant
+$ molecule test
 ```
 
 Running
