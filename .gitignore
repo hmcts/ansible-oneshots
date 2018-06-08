@@ -1,0 +1,11 @@
+# General files
+*.swp
+
+# Ansible files
+*.retry
+
+# Python
+.pytest_cache/
+*.pyc
+__pycache__/*
+pytestdebug.log

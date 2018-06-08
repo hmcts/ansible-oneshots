@@ -1,0 +1,87 @@
+---
+- name: Print IP we're locking down to
+  debug:
+    msg: "{{ only_source_address }}"
+
+- name: Value of revert_block
+  debug:
+    msg: '{{ revert_block }}'
+
+- name: Get status of LOGGING chain
+  command: iptables -S LOGGING
+  become: true
+  register: logging_chain_status
+  changed_when: false
+  failed_when: false
+
+- name: Print stderr of get status command
+  debug:
+    msg: "{{ logging_chain_status.stderr }}"
+
+- name: Create LOGGING chain
+  command: iptables --new-chain LOGGING
+  become: true
+  when: "'No chain/target' in logging_chain_status.stderr"
+
+- name: Allow specified source
+  iptables:
+    action: insert
+    chain: INPUT
+    source: "{{ only_source_address }}"
+    protocol: tcp
+    match: tcp
+    jump: ACCEPT
+    rule_num: 1
+  become: true
+  when: not revert_block
+
+- name: Forward everything else to LOGGING chain
+  iptables:
+    action: insert
+    chain: INPUT
+    jump: LOGGING
+    rule_num: 2
+  become: true
+  when: not revert_block
+
+- name: Log packets in LOGGING chain
+  iptables:
+    action: insert
+    chain: LOGGING
+    rule_num: 1
+    jump: LOG
+    log_prefix: "Restrict-Access-Dropped:"
+  become: true
+  when: not revert_block
+
+- name: Drop packets in LOGGING chain
+  iptables:
+    action: insert
+    chain: LOGGING
+    rule_num: 2
+    jump: DROP
+  become: true
+  when: not revert_block
+
+- name: Revert forward to LOGGING rule (block rule)
+  iptables:
+    action: insert
+    chain: INPUT
+    jump: LOGGING
+    rule_num: 2
+    state: absent
+  become: true
+  when: revert_block
+
+- name: Revert solitary allow
+  iptables:
+    action: insert
+    chain: INPUT
+    source: "{{ only_source_address }}"
+    protocol: tcp
+    match: tcp
+    jump: ACCEPT
+    rule_num: 1
+    state: absent
+  become: true
+  when: revert_block
