@@ -63,6 +63,16 @@
   become: true
   when: not revert_block
 
+- name: Revert forward to LOGGING rule (block rule)
+  iptables:
+    action: insert
+    chain: INPUT
+    jump: LOGGING
+    rule_num: 2
+    state: absent
+  become: true
+  when: revert_block
+
 - name: Revert solitary allow
   iptables:
     action: insert
@@ -72,16 +82,6 @@
     match: tcp
     jump: ACCEPT
     rule_num: 1
-    state: absent
-  become: true
-  when: revert_block
-
-- name: Revert blanket block
-  iptables:
-    action: insert
-    chain: INPUT
-    jump: LOGGING
-    rule_num: 2
     state: absent
   become: true
   when: revert_block

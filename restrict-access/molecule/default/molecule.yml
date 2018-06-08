@@ -21,6 +21,9 @@ scenario:
 verifier:
   name: testinfra
   enabled: true
+  options:
+    v: true
+    sudo: true
   lint:
     name: flake8
     enabled: true
