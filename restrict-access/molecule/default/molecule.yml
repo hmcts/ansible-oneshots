@@ -8,12 +8,23 @@ driver:
 lint:
   name: yamllint
 platforms:
-  - name: instance
+  - name: apply-restriction
+    box: centos/7
+  - name: disable-restriction
     box: centos/7
 provisioner:
   name: ansible
-  options:
-    extra-vars: '{"host_to_apply_to":"localhost","only_source_address":"10.0.2.0/12"}'
+  inventory:
+    host_vars:
+      apply-restriction:
+        host_to_apply_to: localhost
+        only_source_address: "10.0.2.0/12"
+      disable-restriction:
+        host_to_apply_to: localhost
+        only_source_address: "10.0.2.0/12"
+        revert_block: true
+        #  options:
+        #    extra-vars: '{"host_to_apply_to":"localhost","only_source_address":"10.0.2.0/12"}'
   lint:
     name: ansible-lint
 scenario:

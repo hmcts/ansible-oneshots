@@ -1,5 +1,10 @@
 ---
-- name: Converge
-  hosts: all
+- name: Converge-Apply
+  hosts: apply-restriction
+  roles:
+    - role: restrict-access
+
+- name: Converge-Disable
+  hosts: disable-restriction
   roles:
     - role: restrict-access
