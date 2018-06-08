@@ -22,6 +22,12 @@ Molecule installed, along with the dependencies required.
 $ molecule test
 ```
 
+This creates two boxes in Vagrant/VirtualBox, one of which has the iptables 
+rules applied, and a second which has them asserted to be removed.
+
+A series of `testinfra` tests are then run against both boxes, specific to each
+which results in a series of `PASSED` results, hopefully.
+
 Running
 -------
 
