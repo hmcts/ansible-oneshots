@@ -1,3 +1,6 @@
+# General files
+*.swp
+
 # Ansible files
 *.retry
 
@@ -5,3 +8,4 @@
 .pytest_cache/
 *.pyc
 __pycache__/*
+pytestdebug.log
