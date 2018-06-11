@@ -1,0 +1,3 @@
+---
+- name: Include dateprint.yml
+  include_tasks: ../includes/dateprint.yml
