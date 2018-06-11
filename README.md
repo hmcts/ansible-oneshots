@@ -9,9 +9,7 @@ An example oneshot in the form of 'datecheck' has been written.
 This example also includes a molecule test setup (using Vagrant/VirtualBox) 
 that can be copied and adjusted as needed.
 
-Elasticsearch Upgrade
-=====================
+README Files
+------------
 
-Used to perform a rolling upgrade of an Elasticsearch cluster.
-
-See README.md within ```elasticsearch-upgrade```
+See individual oneshots for their respective README files.
