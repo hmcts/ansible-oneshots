@@ -4,9 +4,12 @@ About
 Collection of simple ansible oneshot roles, initially written to solve a
 few requirements for for loops. 
 
-Elasticsearch Upgrade
-=====================
+An example oneshot in the form of 'datecheck' has been written.
 
-Used to perform a rolling upgrade of an Elasticsearch cluster.
+This example also includes a molecule test setup (using Vagrant/VirtualBox) 
+that can be copied and adjusted as needed.
 
-See README.md within ```elasticsearch-upgrade```
+README Files
+------------
+
+See individual oneshots for their respective README files.
