@@ -12,6 +12,7 @@
   yum:
     list: sssd
   register: sssdpackage
+  failed_when: false
 
 - name: Print specific sssd version
   debug:
