@@ -12,7 +12,7 @@
     method: GET
     user: "{{ elk_es_user }}"
     password: "{{ elk_es_pass }}"
-    validate_certs: no
+    validate_certs: "no"
   retries: 4
   delay: 30
 
@@ -23,7 +23,7 @@
     body: '{"transient":{"cluster.routing.allocation.enable":"none"}}'
     user: "{{ elk_es_user }}"
     password: "{{ elk_es_pass }}"
-    validate_certs: no
+    validate_certs: "no"
     headers:
       Content-Type: "application/json"
 
@@ -35,6 +35,7 @@
 - name: remove plugins
   command: /usr/share/elasticsearch/bin/elasticsearch-plugin remove {{ item }}
   with_items: "{{ elk_es_plugins }}"
+  changed_when: false
 
 - name: upgrade ES
   yum:
@@ -43,6 +44,7 @@
 - name: re-install plugins
   command: /usr/share/elasticsearch/bin/elasticsearch-plugin install --batch file:///tmp/{{ item }}-{{ elk_dst_version }}.zip
   with_items: "{{ elk_es_plugins }}"
+  changed_when: false
 
 - name: remove plugin temp file
   file:
@@ -66,8 +68,8 @@
   systemd:
     name: elasticsearch
     state: started
-    enabled: yes
-    daemon_reload: yes
+    enabled: true
+    daemon_reload: true
 
 - name: Waiting for port 9200
   wait_for:
@@ -90,7 +92,7 @@
     body: '{"transient":{"cluster.routing.allocation.enable":"all"}}'
     user: "{{ elk_es_user }}"
     password: "{{ elk_es_pass }}"
-    validate_certs: no
+    validate_certs: "no"
     headers:
       Content-Type: "application/json"
 
@@ -100,7 +102,7 @@
     method: GET
     user: "{{ elk_es_user }}"
     password: "{{ elk_es_pass }}"
-    validate_certs: no
+    validate_certs: "no"
   register: response
   until: response.json.status == "green"
   retries: 20

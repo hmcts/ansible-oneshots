@@ -1,0 +1,109 @@
+---
+- name: Converge
+  hosts: all
+  pre_tasks:
+    - name: Install testing requirements
+      package:
+        name: "{{ item }}"
+        state: present
+      with_items:
+        - net-tools
+        - openssl
+        - which
+        - java-1.8.0-openjdk-headless
+        - curl
+      become: true
+
+    - name: Extract Searchguard TLS tool
+      unarchive:
+        src: https://search.maven.org/remotecontent?filepath=com/floragunn/search-guard-tlstool/1.5/search-guard-tlstool-1.5.tar.gz
+        dest: /tmp
+        remote_src: true
+      become: true
+
+    - name: Copy Searchguard TLS tool test configuration
+      copy:
+        src: tls_test.yml
+        dest: /tmp/tls_test.yml
+
+    - name: Generate Searchguard test certificates
+      command: /bin/bash /tmp/tools/sgtlstool.sh -c /tmp/tls_test.yml -t /tmp -ca -crt
+      args:
+        creates: /tmp/localhost.key
+      become: true
+
+    # Convert the generated key from pkcs1 to pkcs8 as only the latter is supposed by Searchguard.
+    # Yes even though it's their utility creating the keys, they're saved in the wrong format.
+    - name: Convert host key to pkcs8 format
+      command: openssl pkcs8 -nocrypt -topk8 -inform PEM -outform PEM -in /tmp/localhost.key -out /tmp/localhost.key.pkcs8
+      args:
+        creates: /tmp/localhost.key.pkcs8
+
+    - name: Convert transport key to pkcs8 format
+      command: openssl pkcs8 -nocrypt -topk8 -inform PEM -outform PEM -in /tmp/localhost_http.key -out /tmp/localhost_http.key.pkcs8
+      args:
+        creates: /tmp/localhost_http.key.pkcs8
+
+    - name: Convert admin key to pkcs8 format
+      command: openssl pkcs8 -nocrypt -topk8 -inform PEM -outform PEM -in /tmp/admin.key -out /tmp/admin.key.pkcs8
+      args:
+        creates: /tmp/admin.key.pkcs8
+
+    - name: Slurp transport key
+      slurp:
+        src: /tmp/localhost.key.pkcs8
+      register: slurp_elk_sg_transport_key
+
+    - name: Slurp transport cert
+      slurp:
+        src: /tmp/localhost.pem
+      register: slurp_elk_sg_transport_cert
+
+    - name: Slurp CA cert
+      slurp:
+        src: /tmp/elk.local.pem
+      register: slurp_elk_sg_ca_cert
+
+    - name: Slurp HTTP key
+      slurp:
+        src: /tmp/localhost_http.key.pkcs8
+      register: slurp_elk_sg_http_key
+
+    - name: Slurp HTTP cert
+      slurp:
+        src: /tmp/localhost_http.pem
+      register: slurp_elk_sg_http_cert
+
+    - name: Print IPs of instances
+      debug:
+        msg: "{{ hostvars[item]['ansible_eth1']['ipv4']['address'] }}"
+      with_items:
+        - instance1
+        - instance2
+        - instance3
+
+    - name: Write all instance hostnames to /etc/hosts
+      lineinfile:
+        dest: /etc/hosts
+        regexp: '.*{{ item }}$'
+        line: "{{ hostvars[item].ansible_eth1.ipv4.address }} {{item}}"
+        state: present
+      when: hostvars[item].ansible_eth1.ipv4.address is defined
+      with_items:
+        - instance1
+        - instance2
+        - instance3
+      become: true
+
+  vars:
+    elk_sg_transport_key: "{{ slurp_elk_sg_transport_key['content'] | b64decode }}"
+    elk_sg_transport_cert: "{{ slurp_elk_sg_transport_cert['content'] | b64decode }}"
+    elk_sg_ca_cert: "{{ slurp_elk_sg_ca_cert['content'] | b64decode }}"
+    elk_sg_http_key: "{{ slurp_elk_sg_http_key['content'] | b64decode }}"
+    elk_sg_http_cert: "{{ slurp_elk_sg_http_cert['content'] | b64decode }}"
+    elk_sg_elastic_user_password: "es_changeme"
+    elk_sg_kibana_user_password: "kb_changeme"
+    elk_sg_logstash_user_password: "ls_changeme"
+  roles:
+    - { role: hmcts.elasticsearch-role, become: true }
+    - role: elasticsearch-upgrade

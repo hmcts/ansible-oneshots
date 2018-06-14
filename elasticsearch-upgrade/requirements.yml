@@ -1,0 +1,11 @@
+---
+- src: https://github.com/hmcts/elasticsearch-role
+  name: hmcts.elasticsearch-role
+  scm: git
+  version: master
+
+- src: https://github.com/hmcts/java-role
+  name: devops.java
+
+- src: https://github.com/hmcts/repos-role
+  name: devops.repos

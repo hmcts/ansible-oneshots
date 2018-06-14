@@ -1,0 +1,11 @@
+---
+elk_dst_version: 1.9.9    # Version doesn't exist, throws error by default.
+elk_es_host: "{{ lookup('hashi_vault', 'secret=secret/devops/elk/elk_elastic_hostname:value')|replace('\\n', '\n') }}"
+elk_es_plugins:
+  - x-pack
+  - repository-azure
+
+elk_es_user: "{{ lookup('hashi_vault', 'secret=secret/devops/elk/elk_elastic_username:value')|replace('\\n', '\n') }}"
+elk_es_pass: "{{ lookup('hashi_vault', 'secret=secret/devops/elk/elk_elastic_password:value')|replace('\\n', '\n') }}"
+
+elk_plugin_base_url: "{{ lookup('hashi_vault', 'secret=secret/devops/elk/elk_elastic_plugin_base_url:value')|replace('\\n', '\n') }}"

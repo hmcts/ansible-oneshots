@@ -1,0 +1,22 @@
+---
+- name: Detecting current ES version
+  uri:
+    url: https://{{ ansible_fqdn }}:9200/
+    method: GET
+    user: "{{ elk_es_user }}"
+    password: "{{ elk_es_pass }}"
+    validate_certs: "no"
+  register: elk_es_cur_version
+
+- name: Waiting for startup when testing
+  wait_for:
+    port: 9200
+    delay: 10
+  when: ansible_virtualization_type == "virtualbox"
+
+- name: Current ES version
+  debug: var=elk_es_cur_version.json.version.number
+
+- name: Performing rolling upgrade
+  include_tasks: ../includes/rolling_upgrade.yml
+  when: elk_es_cur_version.json.version.number != elk_dst_version

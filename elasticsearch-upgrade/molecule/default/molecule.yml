@@ -1,0 +1,67 @@
+---
+dependency:
+  name: galaxy
+  options:
+    role-file: requirements.yml
+driver:
+  name: vagrant
+  provider:
+    name: virtualbox
+lint:
+  name: yamllint
+platforms:
+  - name: instance1
+    box: centos/7
+    groups:
+      - group1
+    interfaces:
+      - auto_config: true
+        network_name: private_network
+        type: dhcp
+  - name: instance2
+    box: centos/7
+    groups:
+      - group1
+    interfaces:
+      - auto_config: true
+        network_name: private_network
+        type: dhcp
+  - name: instance3
+    box: centos/7
+    groups:
+      - group1
+    interfaces:
+      - auto_config: true
+        network_name: private_network
+        type: dhcp
+provisioner:
+  name: ansible
+  lint:
+    name: ansible-lint
+  inventory:
+    group_vars:
+      all:
+        elasticsearch_discovery_zen_ping_unicast_hosts:
+          - instance1
+          - instance2
+          - instance3
+        elasticsearch_network_host: _eth1:ipv4_
+        elasticstack_version: 6.1.0
+        elk_dst_version: 6.2.4
+        elk_es_host: "localhost"
+        elk_es_plugins: []
+        elk_es_user: elastic_user
+        elk_es_pass: es_changeme
+        elk_plugin_base_url: https://artifacts.elastic.co/downloads/packs/
+        repos_role_install_repos_sensitive:
+          - file: "UpstreamElastic"
+            name: "UpstreamElastic"
+            description: "Upstream elastic"
+            baseurl: https://artifacts.elastic.co/packages/6.x/yum
+            gpgkey: https://artifacts.elastic.co/GPG-KEY-elasticsearch
+scenario:
+  name: default
+verifier:
+  name: testinfra
+  lint:
+    name: flake8

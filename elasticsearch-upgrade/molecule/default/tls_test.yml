@@ -1,0 +1,28 @@
+---
+# File used for generating a test used configuration
+ca:
+  root:
+    dn: CN=root.ca.elk.local,OU=CA,O=HMCTS,DC=elk,DC=local
+    keysize: 2048
+    pkPassword: none
+    validityDays: 1460
+    file: elk.local.ca
+
+defaults:
+  validityDays: 730
+  pkPassword: none
+  nodesDn:
+    - "CN=*.elk.local,OU=DevOps,O=HMCTS,DC=elk,DC=local"
+  nodeOid: "1.2.3.4.5.5"
+  httpsEnabled: true
+  reuseTransportCertificatesForHttp: false
+
+nodes:
+  - name: localhost
+    dn: CN=localhost.elk.local,OU=DevOps,O=HMCTS,DC=elk,DC=local
+    dns: localhost.reform.hmcts.net
+
+clients:
+  - name: admin
+    dn: CN=admin.elk.local,OU=DevOps,O=HMCTS,DC=elk,DC=local
+    admin: true

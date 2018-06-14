@@ -1,35 +1,9 @@
 ---
-
-- name: Elasticsearch upgrade
+- name: Elasticsearch Upgrade
   hosts: all
   serial: 1
-  become: yes
-
-  vars:
-    elk_dst_version: 1.9.9 # Version doesn't exist, throws error by default.
-    elk_es_host: "{{ lookup('hashi_vault', 'secret=secret/devops/elk/elk_elastic_hostname:value')|replace('\\n', '\n') }}"
-    elk_es_plugins:
-      - x-pack
-      - repository-azure
-
-    elk_es_user: "{{ lookup('hashi_vault', 'secret=secret/devops/elk/elk_elastic_username:value')|replace('\\n', '\n') }}"
-    elk_es_pass: "{{ lookup('hashi_vault', 'secret=secret/devops/elk/elk_elastic_password:value')|replace('\\n', '\n') }}"
-
-    elk_plugin_base_url: "{{ lookup('hashi_vault', 'secret=secret/devops/elk/elk_elastic_plugin_base_url:value')|replace('\\n', '\n') }}"
+  become: true
 
   tasks:
-    - name: Detecting current ES version
-      uri:
-        url: https://{{ ansible_fqdn }}:9200/
-        method: GET
-        user: "{{ elk_es_user }}"
-        password: "{{ elk_es_pass }}"
-        validate_certs: no
-      register: elk_es_cur_version
-
-    - name: Current ES version
-      debug: var=elk_es_cur_version.json.version.number
-
-    - name: Performing rolling upgrade
-      include_tasks: includes/rolling_upgrade.yml
-      when: elk_es_cur_version.json.version.number != elk_dst_version
+    - name: Include main.yml
+      include_tasks: tasks/main.yml
