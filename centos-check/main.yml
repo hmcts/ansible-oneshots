@@ -1,9 +1,8 @@
 ---
-- name: Check CentOS version
+- name: Centos Check
   hosts: "{{ host_to_apply_to }}"
   serial: 5
-  become: yes
 
   tasks:
-    - name: Include centos-check.yml
-      include_tasks: includes/centos-check.yml
+    - name: Include main.yml
+      include_tasks: tasks/main.yml

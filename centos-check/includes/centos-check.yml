@@ -8,11 +8,11 @@
 - debug: msg="{{ centos_version.stdout}}"
   when: centos_version.rc == 0
 
-- name: Get SSSD version
-  shell: rpm -qa sssd
-  changed_when: false
-  failed_when: false
-  register: sssd_version
+- name: Use yum to get sssd version
+  yum:
+    list: sssd
+  register: sssdpackage
 
-- debug: msg="{{ sssd_version.stdout}}"
-  when: sssd_version.rc == 0
+- name: Print specific sssd version
+  debug:
+    msg: "{{ sssdpackage }}"
