@@ -27,3 +27,11 @@ required for a major version number upgrade.
 
 * elk_plugin_base_url - base URL of where to find the plugin ZIP files
 
+
+Testing
+-------
+
+Uses molecule (2) and VirtualBox.
+
+Currently tests a three node cluster, without SearchGuard (disabled by a when
+rule in the elasticsearch-role repo.) 
