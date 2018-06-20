@@ -1,0 +1,11 @@
+---
+- name: Get NTP Query output
+  command: ntpq -p
+  register: ntpd_out
+
+- name: Test NTP Sync
+  command: ntpq -np | grep -E '^\*172.16.2.17'
+
+- name: Print NTP Query output
+  debug:
+    msg: "{{ ntpd_out.stdout }}"

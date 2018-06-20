@@ -1,0 +1,11 @@
+---
+- name: ntp-check
+  hosts: "{{ host_to_apply_to }}"
+  serial: 1
+
+  vars_files:
+    - defaults/main.yml
+
+  tasks:
+    - name: Include main.yml
+      include_tasks: tasks/main.yml

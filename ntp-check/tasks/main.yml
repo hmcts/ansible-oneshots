@@ -1,0 +1,3 @@
+---
+- name: Include ntpqprint.yml
+  include_tasks: ../includes/ntpqprint.yml
