@@ -117,7 +117,7 @@ We run the molecule test with:
 [master ?] [adam@verence centos-check]$ molecule test -s azure
 ```
 
-I have found that it's easiest to watch the results by going to the Azure portal, and lookup up the Resource Group, e.g. 'centoscheckmoleculerg' in the search field.
+I have found that it's easiest to watch the results by going to the Azure portal, and looking up the Resource Group, e.g. 'centoscheckmoleculerg' in the search field.
 
 ToDo:
 ----------
