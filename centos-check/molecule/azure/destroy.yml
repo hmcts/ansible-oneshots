@@ -6,7 +6,15 @@
   no_log: "{{ not lookup('env', 'MOLECULE_DEBUG') | bool }}"
   vars:
     resource_group_name: centoscheckmoleculeRG
+    location: uksouth
   tasks:
+
+    # Counterintuitive create to allow for destroy to work on new run.
+    - name: Create resource group
+      azure_rm_resourcegroup:
+        name: "{{ resource_group_name }}"
+        location: "{{ location }}"
+
     - name: Destroy molecule instance(s)
       azure_rm_virtualmachine:
         resource_group: "{{ resource_group_name }}"
@@ -29,12 +37,13 @@
       retries: 300
       with_items: "{{ server.results }}"
 
-      #    - name: Delete molecule resource group
-      #      azure_rm_resourcegroup:
-      #        name: "{{ resource_group_name }}"
-      #        force: true
-      #        state: absent
-      #      register: rg
+    # Added to account for lingering NSG, Storage Account, and VNET in RG.
+    - name: Delete molecule resource group
+      azure_rm_resourcegroup:
+        name: "{{ resource_group_name }}"
+        force: true
+        state: absent
+      register: rg
 
     # Mandatory configuration for Molecule to function.
 
