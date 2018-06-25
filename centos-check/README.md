@@ -107,13 +107,38 @@ We need to do the same to the 'destroy' playbook:
     resource_group_name: centoscheckmoleculeRG
 ```
 
-Running Our Azure Example 
+We also need to ensure that we're not leaving anything behind following a run, 
+to that end, we adjust the 'destroy.yml' playbook, adding the following bits:
+
+```
+    location: uksouth
+  tasks:
+
+    # Counterintuitive create to allow for destroy to work on new run.
+    - name: Create resource group
+      azure_rm_resourcegroup:
+        name: "{{ resource_group_name }}"
+        location: "{{ location }}"
+```
+
+Note the 'location' addition under the vars above. We also add:
+
+```
+    # Added to account for lingering NSG, Storage Account, and VNET in RG.
+    - name: Delete molecule resource group
+      azure_rm_resourcegroup:
+        name: "{{ resource_group_name }}"
+        force: true
+        state: absent
+      register: rg
+```
+
+Running Our Azure Example
 -----------------------------------------------------------------
 
 We run the molecule test with:
 
 ```
-[master ?] [adam@verence centos-check]$ molecule create -s azure # Needed first in this instance, as it creates the RG
 [master ?] [adam@verence centos-check]$ molecule test -s azure
 ```
 
@@ -122,6 +147,5 @@ I have found that it's easiest to watch the results by going to the Azure portal
 ToDo:
 ----------
 
-• I origionally had the resource group and other bits randomly generated using an Ansible lookup pipe, but this caused issues when used with destroy. Need a way to make the create/destroy playbooks more generic, but keeping the unique names to the individual roles (centos-check.) 
-• At the moment, running a 'test' will leave a virtual network, an NSG, a Storage Account, and a Resource Group, in place. Arguably this is good, as it minimizes the time for a test to be run, but it might be worth looking in to deletion, especially if the first point on this list is addressed. Also worth noting that the 'Storage Account' is unique to a run, and may build up over time.
-• See if there's a way to remove the manual 'create' step which is required to make the RG prior to the 'test' run.
+• I origionally had the resource group and other bits randomly generated using an Ansible lookup pipe, but this caused issues when used with destroy. Need a way to make the create/destroy playbooks more generic, but keeping the unique names to the individual roles (centos-check.)
+* Look into a way of templating this, so we're creating tests consistently.
